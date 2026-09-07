@@ -40,7 +40,7 @@ SmartShopLab/
     └── ai-evals/         # Evaluación IA (alucinaciones)
 ```
 
-## Requisitos previos
+## Requisitos
 
 | Herramienta | Versión mínima | Para qué |
 |-------------|----------------|----------|
@@ -343,7 +343,7 @@ Comprueba manualmente: catálogo, carrito y chat.
 
 ##### C.4 — Maestro E2E (app ya abierta en Expo Go)
 
-Canal: **app móvil** en Expo Go. Configura plataforma si hace falta:
+Canal: **app móvil** en Expo Go. Configura plataforma (si hace falta):
 
 ```bash
 cp .env.maestro.local.example .env.maestro.local
