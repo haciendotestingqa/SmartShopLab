@@ -77,10 +77,16 @@ jobs:
         continue-on-error: true
         run: npm run test:api-postman
 
-      - name: Pact contracts
-        id: pact
+      - name: Pact consumer
+        id: pact_consumer
         continue-on-error: true
-        run: npm run test:contract
+        run: npm run test:contract:consumer
+
+      # Lab intencional: provider falla por magicField — no debe tumbar el workflow
+      - name: Pact provider (expected FAIL — magicField)
+        id: pact_provider
+        continue-on-error: true
+        run: npm run test:contract:provider
 
       - name: k6 load
         id: k6
@@ -146,8 +152,9 @@ jobs:
           path: reports-site
           retention-days: 14
 
+      # Críticas: web + newman + pact consumer. Provider (magicField) es FAIL de lab a propósito.
       - name: Fail if critical suites failed
-        if: steps.web.outcome == 'failure' || steps.newman.outcome == 'failure' || steps.pact.outcome == 'failure'
+        if: steps.web.outcome == 'failure' || steps.newman.outcome == 'failure' || steps.pact_consumer.outcome == 'failure'
         run: |
-          echo "Falló alguna suite crítica (web/newman/pact). Los reportes igual se publicaron en Pages."
+          echo "Falló alguna suite crítica (web/newman/pact consumer). Los reportes igual se publicaron en Pages."
           exit 1
