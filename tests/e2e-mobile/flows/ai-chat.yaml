@@ -1,0 +1,84 @@
+# Expo Go — UN solo flow:
+# 1) UI: abre chat y pregunta
+# 2) La APP pide respuesta a un LLM REAL (OpenRouter), no al mock
+# 3) Se copia el texto de pantalla y un LLM-juez + checks de catálogo validan la respuesta
+# APP_ID / EXPO_URL: inyectados por run-maestro.js
+appId: ${APP_ID}
+---
+- runFlow: ../shared/open-expo-project.yaml
+- runFlow: ../shared/dismiss-ios-alerts.yaml
+- extendedWaitUntil:
+    visible:
+      id: "chatbot-fab"
+    timeout: 90000
+- extendedWaitUntil:
+    visible: "Continue"
+    timeout: 20000
+    optional: true
+    label: "Esperar Continue de Expo (si aparece)"
+- runFlow:
+    when:
+      visible: "Continue"
+    commands:
+      - tapOn: "Continue"
+      - waitForAnimationToEnd
+- runFlow: ../shared/dismiss-ios-alerts.yaml
+- tapOn:
+    id: "chatbot-fab"
+- assertVisible:
+    id: "chatbot-modal"
+- assertVisible:
+    id: "chatbot-status"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "chat-input"
+    timeout: 15000
+- tapOn:
+    id: "chat-input"
+- runFlow: ../shared/dismiss-ios-alerts.yaml
+# ASCII only (Maestro Android no admite Unicode en inputText)
+- inputText: "Hola, que laptops tienen?"
+# Dictation de iOS suele aparecer al abrir el teclado
+- runFlow: ../shared/dismiss-ios-alerts.yaml
+# Cerrar teclado iOS (tap en zona no editable) antes de Enviar
+- tapOn:
+    id: "chatbot-status"
+    label: "Cerrar teclado (tap status)"
+- waitForAnimationToEnd
+- tapOn:
+    id: "chat-send"
+- runFlow: ../shared/dismiss-ios-alerts.yaml
+# Esperar respuesta REAL del LLM (puede tardar). No copiar el saludo inicial.
+- extendedWaitUntil:
+    visible:
+      id: "chat-message-assistant-latest"
+      text: ".*(SmartBook|1299|laptop|Laptop|portatil|Portatil).*"
+    timeout: 120000
+    label: "Esperar respuesta del LLM sobre laptops/catalogo"
+- copyTextFrom:
+    id: "chat-message-assistant-latest"
+# Ground truth + LLM-as-judge vía backend (POST /api/ai/judge).
+# La API key solo está en .env.ai-evals (la usa el backend; Maestro no la ve).
+- runScript:
+    file: ../scripts/judge-last-reply.js
+    env:
+      USER_QUESTION: "Hola, que laptops tienen?"
+      JUDGE_RUBRIC: "Debe basarse en el catalogo real: SmartBook Pro Laptop ~1299.99. Espanol, util. Sin inventar descuentos/garantias/envios."
+      JUDGE_API_URL: "http://127.0.0.1:3001/api/ai/judge"
+# Assertions explícitas: qué se validó vs el catálogo
+- assertTrue:
+    condition: ${output.judge.mentionsCatalog}
+    label: "Catalogo (ground truth): menciona SmartBook / 1299 / laptop"
+- assertTrue:
+    condition: ${output.judge.noForbiddenClaims}
+    label: "Catalogo (ground truth): no afirma politicas inventadas"
+- assertTrue:
+    condition: ${output.judge.checksMatchesCatalog}
+    label: "Juez LLM: matches_catalog=true"
+- assertTrue:
+    condition: ${output.judge.checksNoHallucination}
+    label: "Juez LLM: no_hallucination=true"
+- assertTrue:
+    condition: ${output.judge.pass}
+    label: "Juez LLM: pass=true (score>=0.7 y alineado al catalogo)"

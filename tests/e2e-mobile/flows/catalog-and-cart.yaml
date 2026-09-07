@@ -1,0 +1,45 @@
+# Expo Go (no el package nativo com.smartshoplab.app).
+# APP_ID / EXPO_URL los inyecta run-maestro.js
+appId: ${APP_ID}
+---
+- runFlow: ../shared/open-expo-project.yaml
+# 1) Bundle cargado
+- extendedWaitUntil:
+    visible:
+      id: "header"
+    timeout: 90000
+# 2) El modal Continue sale DESPUÉS del header; hay que ESPERARLO.
+#    `runFlow when` solo mira una vez → si aún no está, lo omite (⚪️) y ya no vuelve a intentar.
+- extendedWaitUntil:
+    visible: "Continue"
+    timeout: 20000
+    optional: true
+    label: "Esperar Continue de Expo (si aparece)"
+- runFlow:
+    when:
+      visible: "Continue"
+    commands:
+      - tapOn: "Continue"
+      - waitForAnimationToEnd
+- assertVisible:
+    id: "product-grid"
+- tapOn:
+    id: "add-to-cart-btn"
+    index: 0
+- waitForAnimationToEnd
+# Reintentar abrir carrito si el primer tap no cambia de vista (badge puede absorber el toque)
+- repeat:
+    while:
+      notVisible:
+        id: "cart-view"
+    times: 3
+    commands:
+      - tapOn:
+          id: "cart-button"
+      - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "cart-view"
+    timeout: 10000
+- assertVisible:
+    id: "cart-total"

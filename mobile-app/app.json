@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "SmartShopLab",
+    "slug": "smartshoplab",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#1E293B"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.smartshoplab.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#1E293B"
+      },
+      "package": "com.smartshoplab.app"
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3bbb3657-4319-455a-9789-717d0a324536"
+      }
+    },
+    "owner": "haciendotestingqa",
+    "updates": {
+      "url": "https://u.expo.dev/3bbb3657-4319-455a-9789-717d0a324536"
+    }
+  }
+}

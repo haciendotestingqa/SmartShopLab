@@ -1,0 +1,17 @@
+{
+  "name": "tests-contract",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "npm run pact:consumer && npm run pact:provider",
+    "pact:consumer": "mkdir -p reports && vitest run consumer.test.ts --reporter=default --reporter=json --outputFile=reports/consumer.json; e=$?; tsx write-consumer-html.ts; exit $e",
+    "pact:provider": "tsx provider.verify.ts"
+  },
+  "devDependencies": {
+    "@pact-foundation/pact": "^13.2.0",
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}

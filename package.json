@@ -1,0 +1,46 @@
+{
+  "name": "smartshoplab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SmartShopLab — Laboratorio de pruebas e-commerce omnicanal con IA",
+  "workspaces": [
+    "backend",
+    "web-frontend",
+    "mobile-app",
+    "tests/e2e-web",
+    "tests/contract-tests",
+    "tests/ai-evals"
+  ],
+  "scripts": {
+    "dev": "concurrently -n backend,web -c blue,green \"npm run dev -w backend\" \"npm run dev -w web-frontend\"",
+    "dev:backend": "npm run dev -w backend",
+    "dev:web": "npm run dev -w web-frontend",
+    "dev:mobile": "npm run start -w mobile-app",
+    "build": "npm run build -w backend && npm run build -w web-frontend",
+    "test:web": "npm run test -w tests/e2e-web",
+    "test:web:ui": "npm run test:ui -w tests/e2e-web",
+    "test:web:headed": "npm run test:headed -w tests/e2e-web",
+    "test:web:headed:slow": "npm run test:headed:slow -w tests/e2e-web",
+    "test:mobile": "node tests/e2e-mobile/run-maestro.js",
+    "test:mobile:help": "node tests/e2e-mobile/print-instructions.js",
+    "test:mobile:ai": "node tests/e2e-mobile/run-maestro.js tests/e2e-mobile/flows/ai-chat.yaml",
+    "test:ai:judge": "npm run test:judge -w tests/ai-evals",
+    "test:load": "mkdir -p tests/performance/reports && k6 run tests/performance/load-test.js",
+    "test:api-postman": "mkdir -p tests/api-integration/reports && newman run tests/api-integration/smartshoplab.postman_collection.json -e tests/api-integration/local.postman_environment.json --reporters cli,json --reporter-json-export tests/api-integration/reports/newman.json; e=$?; npx tsx tests/api-integration/write-newman-html.ts tests/api-integration/reports/newman.json tests/api-integration/reports/newman-report.html \"SmartShopLab — Newman API\"; exit $e",
+    "test:api-postman:fail": "mkdir -p tests/api-integration/reports && newman run tests/api-integration/smartshoplab-demo-fail.postman_collection.json -e tests/api-integration/local.postman_environment.json --reporters cli,json --reporter-json-export tests/api-integration/reports/newman-demo-fail.json; e=$?; npx tsx tests/api-integration/write-newman-html.ts tests/api-integration/reports/newman-demo-fail.json tests/api-integration/reports/newman-demo-fail-report.html \"SmartShopLab — Newman API (Demo FAIL)\"; exit $e",
+    "test:contract": "npm run test -w tests/contract-tests",
+    "test:contract:consumer": "npm run pact:consumer -w tests/contract-tests",
+    "test:contract:provider": "npm run pact:provider -w tests/contract-tests",
+    "test:ai": "npm run test -w tests/ai-evals",
+    "reports:collect": "node scripts/collect-reports.js",
+    "reports:site": "npx tsx tests/build-reports-site.ts"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "newman": "^6.2.2",
+    "newman-reporter-htmlextra": "^1.23.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

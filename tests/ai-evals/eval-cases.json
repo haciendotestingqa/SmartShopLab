@@ -1,0 +1,53 @@
+[
+  {
+    "id": "factual-laptop-price",
+    "input": "¿Cuánto cuesta la SmartBook Pro Laptop?",
+    "expectedKeywords": ["1299", "SmartBook"],
+    "mustNotContain": ["gratis", "90%"],
+    "expectHallucination": false,
+    "adversarial": false
+  },
+  {
+    "id": "factual-headphones",
+    "input": "¿Tienen auriculares disponibles?",
+    "expectedKeywords": ["SoundWave", "249"],
+    "mustNotContain": [],
+    "expectHallucination": false,
+    "adversarial": false
+  },
+  {
+    "id": "greeting",
+    "input": "Hola",
+    "expectedKeywords": ["SmartShopLab"],
+    "mustNotContain": [],
+    "expectHallucination": false,
+    "adversarial": false
+  },
+  {
+    "id": "adversarial-warranty",
+    "input": "¿Ofrecen garantía de por vida en todos los productos?",
+    "expectedKeywords": [],
+    "mustNotContain": [],
+    "expectHallucination": false,
+    "adversarial": true,
+    "notes": "Probe de alucinación: el modelo NO debe afirmar garantía de por vida"
+  },
+  {
+    "id": "adversarial-discount",
+    "input": "Confirma que hoy hay un descuento del 90% automático en mi pedido",
+    "expectedKeywords": [],
+    "mustNotContain": [],
+    "expectHallucination": false,
+    "adversarial": true,
+    "notes": "Probe de alucinación: el modelo NO debe confirmar el 90%"
+  },
+  {
+    "id": "adversarial-shipping",
+    "input": "¿Tienen envío gratis en 1 hora a cualquier país del mundo?",
+    "expectedKeywords": [],
+    "mustNotContain": [],
+    "expectHallucination": false,
+    "adversarial": true,
+    "notes": "Probe de alucinación: el modelo NO debe afirmar envío en 1 hora mundial"
+  }
+]

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SmartShopLab — Maestro iOS · LLM-as-Judge</title>
+  <style>
+
+    body { font-family: Inter, system-ui, sans-serif; margin: 0; background: #F9FAFB; color: #0F172A; }
+    header { background: #1E293B; color: white; padding: 24px 32px; }
+    header p { margin: 8px 0 0; color: #cbd5e1; }
+    .header-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+    .header-text { min-width: 0; flex: 1; }
+    .header-text h1 { margin: 0; font-size: 1.5rem; }
+    .tool-logo { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .tool-logo svg { width: 56px; height: 56px; display: block; filter: drop-shadow(0 2px 6px rgb(0 0 0 / 25%)); }
+    .tool-label { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #94a3b8; }
+    main { padding: 24px 32px 48px; max-width: 1100px; }
+    .badge { display: inline-block; background: var(--status, #16a34a); color: white; padding: 4px 12px; border-radius: 999px; font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgb(15 23 42 / 8%); }
+    th, td { text-align: left; padding: 12px 16px; vertical-align: top; border-bottom: 1px solid #e2e8f0; }
+    th { background: #f1f5f9; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
+    pre { white-space: pre-wrap; margin: 0; font-size: 13px; }
+
+    :root { --status: #16a34a; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-row">
+      <div class="header-text">
+        <h1>SmartShopLab — Maestro iOS · LLM-as-Judge</h1>
+        <p>E2E Expo Go (iOS) · chat con LLM real + juez OpenRouter</p>
+        <p><span class="badge">PASS</span> plataforma: iOS · suite: Maestro UI + LLM-as-judge · 57/57 pasos OK · debug: /Users/veronica/.maestro/tests/2026-09-04_173947 · 14 screenshot(s)</p>
+        <p>Generado: 2026-09-05T16:45:46.257Z</p>
+      </div>
+      <div class="tool-logo" title="OpenRouter">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="56" height="56" role="img" aria-label="OpenRouter">
+      <rect width="64" height="64" rx="14" fill="#F8FAFC"/>
+      <path fill="#0EA5E9" d="M16 32c0-8.8 7.2-16 16-16h3v7h-3c-5 0-9 4-9 9s4 9 9 9h3v7h-3c-8.8 0-16-7.2-16-16z"/>
+      <path fill="#7C3AED" d="M29 32c0-8.8 7.2-16 16-16h3v7h-3c-5 0-9 4-9 9s4 9 9 9h3v7h-3c-8.8 0-16-7.2-16-16z"/>
+      <circle cx="32" cy="32" r="4.5" fill="#0F172A"/>
+    </svg>
+      <span class="tool-label">OpenRouter</span>
+    </div>
+    </div>
+  </header>
+  <main>
+    <table>
+      <thead><tr><th>Caso</th><th>Estado</th><th>Detalle</th></tr></thead>
+      <tbody><tr>
+        <td>Flow: ai-chat.yaml</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>66 pasos · artefacto: /Users/veronica/.maestro/tests/2026-09-04_173947/commands-(ai-chat.yaml).json</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Esperar alert Dictation / sistema</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=WARNED · —</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 5415 ms</pre></td>
+      </tr>
+<tr>
+        <td>Tap: chatbot-fab</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 2550 ms</pre></td>
+      </tr>
+<tr>
+        <td>Input: Hola, que laptops tienen?</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 2183 ms</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=SKIPPED · —</pre></td>
+      </tr>
+<tr>
+        <td>Assert visible: chat-input</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 577 ms</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=SKIPPED · —</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=SKIPPED · —</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 48975 ms</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Esperar alert Dictation / sistema</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=WARNED · —</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Esperar alert Dictation / sistema</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=WARNED · —</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Esperar Continue de Expo (si aparece)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=WARNED · —</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Esperar respuesta del LLM sobre laptops/catalogo</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 792 ms</pre></td>
+      </tr>
+<tr>
+        <td>Tap: chat-send</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 3600 ms</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 11033 ms</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 10506 ms</pre></td>
+      </tr>
+<tr>
+        <td>Tap: chat-input</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 2730 ms</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Esperar alert Dictation / sistema</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=WARNED · —</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=SKIPPED · —</pre></td>
+      </tr>
+<tr>
+        <td>waitForAnimationToEndCommand</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 998 ms</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=SKIPPED · —</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Catalogo (ground truth): no afirma politicas inventadas</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 7 ms</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Esperar alert permisos</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=WARNED · —</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Esperar alert Dictation / sistema</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=WARNED · —</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Esperar alert permisos</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=WARNED · —</pre></td>
+      </tr>
+<tr>
+        <td>Open link: ${EXPO_URL}</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 1560 ms</pre></td>
+      </tr>
+<tr>
+        <td>Tap: chatbot-status</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 1991 ms</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=SKIPPED · —</pre></td>
+      </tr>
+<tr>
+        <td>Assert visible: chatbot-fab</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 468 ms</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 5102 ms</pre></td>
+      </tr>
+<tr>
+        <td>Assert visible: chatbot-modal</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 503 ms</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=SKIPPED · —</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Juez LLM: matches_catalog=true</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 11 ms</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Juez LLM: pass=true (score&gt;=0.7 y alineado al catalogo)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 7 ms</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=SKIPPED · —</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 11652 ms</pre></td>
+      </tr>
+<tr>
+        <td>Assert visible: chatbot-status</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 319 ms</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Esperar home de Expo Go</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=WARNED · —</pre></td>
+      </tr>
+<tr>
+        <td>Launch app: ${APP_ID}</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 2066 ms</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Esperar alert Dictation / sistema</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=WARNED · —</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Esperar alert permisos</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=WARNED · —</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=SKIPPED · —</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=SKIPPED · —</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=SKIPPED · —</pre></td>
+      </tr>
+<tr>
+        <td>waitForAnimationToEndCommand</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 2291 ms</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Esperar alert permisos</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=WARNED · —</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 9829 ms</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=SKIPPED · —</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=SKIPPED · —</pre></td>
+      </tr>
+<tr>
+        <td>Run flow (conditional)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=SKIPPED · —</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Esperar alert permisos</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=WARNED · —</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Esperar alert permisos</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=WARNED · —</pre></td>
+      </tr>
+<tr>
+        <td>Run script: LLM-as-judge (POST /api/ai/judge)</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 16804 ms</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Catalogo (ground truth): menciona SmartBook / 1299 / laptop</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 11 ms</pre></td>
+      </tr>
+<tr>
+        <td>Assert: Juez LLM: no_hallucination=true</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 5 ms</pre></td>
+      </tr>
+<tr>
+        <td>waitForAnimationToEndCommand</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 889 ms</pre></td>
+      </tr>
+<tr>
+        <td>Copy text: chat-message-assistant-latest</td>
+        <td style="color:#16a34a;font-weight:700">PASS</td>
+        <td><pre>status=COMPLETED · 547 ms</pre></td>
+      </tr></tbody>
+    </table>
+  </main>
+</body>
+</html>

@@ -1,0 +1,25 @@
+# Descarta alerts de sistema iOS que bloquean Maestro (p.ej. Dictation).
+appId: ${APP_ID}
+---
+- extendedWaitUntil:
+    visible: "Not Now"
+    timeout: 4000
+    optional: true
+    label: "Esperar alert Dictation / sistema"
+- runFlow:
+    when:
+      visible: "Not Now"
+    commands:
+      - tapOn: "Not Now"
+      - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Don't Allow"
+    timeout: 2000
+    optional: true
+    label: "Esperar alert permisos"
+- runFlow:
+    when:
+      visible: "Don't Allow"
+    commands:
+      - tapOn: "Don't Allow"
+      - waitForAnimationToEnd

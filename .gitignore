@@ -1,0 +1,50 @@
+# Dependencias
+node_modules/
+
+# Build outputs
+dist/
+build/
+.expo/
+web-build/
+
+# Entorno
+.env
+.env.local
+.env.*.local
+.env.ai-evals
+.env.maestro.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Coverage y reportes
+coverage/
+tests/api-integration/reports/
+tests/e2e-web/test-results/
+tests/e2e-web/playwright-report/
+tests/e2e-web/reports/
+tests/ai-evals/reports/
+tests/contract-tests/pacts/
+tests/contract-tests/logs/
+tests/contract-tests/reports/
+tests/performance/reports/
+tests/e2e-mobile/reports/
+reports-site/
+
+# published-reports: solo HTML demo en git (README y resto, uso interno)
+published-reports/**
+!published-reports/**/
+!published-reports/**/*.html
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Pact
+.pact/
+
+# Plan local (no versionar)
+PLAN.md

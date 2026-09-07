@@ -1,0 +1,28 @@
+# Arranque Expo Go → proyecto Metro.
+# Variables (inyectadas por run-maestro.js):
+#   APP_ID   — host.exp.exponent (Android) | host.exp.Exponent (iOS)
+#   EXPO_URL — p.ej. exp://127.0.0.1:8081
+appId: ${APP_ID}
+---
+# Mata y reabre Expo Go (home limpio)
+- launchApp:
+    stopApp: true
+- extendedWaitUntil:
+    visible: "Enter URL manually"
+    timeout: 30000
+    optional: true
+    label: "Esperar home de Expo Go"
+# Deep link al bundler (misma URL siempre → un solo "Recently opened")
+- openLink: ${EXPO_URL}
+- waitForAnimationToEnd
+# En iOS el deep link a veces no entra al proyecto; fallback: Recently opened
+- runFlow:
+    when:
+      visible: "Recently opened"
+    commands:
+      - tapOn:
+          text: "SmartShopLab"
+          index: 0
+          label: "Abrir SmartShopLab desde Recently opened"
+      - waitForAnimationToEnd
+- runFlow: dismiss-ios-alerts.yaml
