@@ -77,6 +77,12 @@ jobs:
         continue-on-error: true
         run: npm run test:api-postman
 
+      # Lab intencional: assert incorrecto (count === 999) — genera reporte FAIL para Pages
+      - name: Newman demo FAIL
+        id: newman_fail
+        continue-on-error: true
+        run: npm run test:api-postman:fail
+
       - name: Pact consumer
         id: pact_consumer
         continue-on-error: true

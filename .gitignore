@@ -37,10 +37,11 @@ published-reports/**
 !published-reports/**/
 !published-reports/**/*.html
 
-# IDE / OS
+# IDE / OS / Cursor
 .DS_Store
 .idea/
 .vscode/
+.cursorrules
 *.swp
 
 # Pact
