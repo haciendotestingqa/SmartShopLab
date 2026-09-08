@@ -105,6 +105,8 @@ jobs:
       - name: AI evals + LLM judge
         id: ai
         continue-on-error: true
+        # Los :free de OpenRouter a veces cuelgan; no bloquear el deploy de Pages
+        timeout-minutes: 12
         run: |
           mkdir -p tests/ai-evals/reports
           if [ -z "$OPENROUTER_API_KEY" ]; then
@@ -130,12 +132,14 @@ jobs:
           OPENROUTER_MODEL: nvidia/nemotron-3.5-lightning:free
           OPENROUTER_JUDGE_MODEL: nvidia/nemotron-3.5-lightning:free
           OPENROUTER_FALLBACK_MODELS: liquid/lfm-2.5-2.6b:free,thinkingmachines/inkling-small:free
-          OPENROUTER_MAX_RETRIES: '3'
+          OPENROUTER_MAX_RETRIES: '2'
+          OPENROUTER_TIMEOUT_MS: '90000'
           OPENROUTER_BASE_URL: https://openrouter.ai/api/v1
           OPENROUTER_SITE_URL: https://smart-shop-lab-web-frontend.vercel.app
           OPENROUTER_APP_NAME: SmartShopLab-AI-Evals-CI
 
       - name: Build reports site
+        if: always()
         run: npx tsx tests/build-reports-site.ts
 
       - name: Setup Pages
