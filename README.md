@@ -165,9 +165,11 @@ Con `npm run dev` o `npm run dev:web`, la tienda **web** queda en http://localho
 | `npm run test:load` | K6 | Backend en `:3001` |
 | `npm run test:api-postman` | Newman | Backend `:3001` — suite completa (debe pasar) |
 | `npm run test:api-postman:fail` | Newman | Backend `:3001` — **Lab:** falla a propósito (`count === 999`) |
-| `npm run test:contract` | Pact (ambas fases) | Backend `:3001`. **Lab:** falla por `magicField` |
-| `npm run test:contract:consumer` | Pact consumer | No requiere backend |
-| `npm run test:contract:provider` | Pact provider | Backend `:3001`. **Lab:** falla por `magicField` |
+| `npm run test:contract` | Pact crítico (consumer + provider **verde**) | Backend `:3001` |
+| `npm run test:contract:consumer` | Pact consumer (contrato real) | No requiere backend |
+| `npm run test:contract:provider` | Pact provider (debe pasar) | Backend `:3001` |
+| `npm run test:contract:consumer:demo-fail` | Consumer demo `magicField` | No requiere backend |
+| `npm run test:contract:provider:demo-fail` | Provider demo (**FAIL esperado**) | Backend `:3001` |
 | `npm run test:ai` | OpenRouter + reglas | `.env.ai-evals` con API key |
 | `npm run test:ai:judge` | OpenRouter + LLM-as-judge | `.env.ai-evals` (sin emulador) |
 
@@ -233,7 +235,8 @@ npm run dev
 |---|-----|---------|--------------------|--------------|
 | 1 | E2E web (Playwright) | Elige **una**: `npm run test:web` · `test:web:ui` · `test:web:headed:slow` | Debe pasar | `tests/e2e-web/reports/playwright-report.html` |
 | 2 | Pact consumer | `npm run test:contract:consumer` | 3/3 OK (no necesita API) | `tests/contract-tests/reports/pact-consumer-report.html` |
-| 3 | Pact provider | `npm run test:contract:provider` | **Falla a propósito** (`magicField`) | `tests/contract-tests/reports/pact-provider-report.html` |
+| 3 | Pact provider | `npm run test:contract:provider` | **Verde** (contrato real) | `tests/contract-tests/reports/pact-provider-report.html` |
+| 3b | Pact provider demo | `npm run test:contract:provider:demo-fail` | **FAIL esperado** (`magicField`) | `tests/contract-tests/reports/pact-provider-demo-fail-report.html` |
 | 4 | Newman OK | `npm run test:api-postman` | 0 failed | `tests/api-integration/reports/newman-report.html` |
 | 5 | Newman FAIL demo | `npm run test:api-postman:fail` | Falla a propósito (`count === 999`) | `tests/api-integration/reports/newman-demo-fail-report.html` |
 | 6 | Carga k6 | `npm run test:load` | ~40 s | `tests/performance/reports/k6-report.html` |
@@ -243,18 +246,19 @@ npm run dev
 | Suite | Qué demuestra / flujo |
 |-------|------------------------|
 | **Playwright** | Ver tabla siguiente (compra + chat mock). |
-| **Pact consumer** | El front (`web-frontend`) define el contrato de `GET /api/products`, `GET /api/cart`, `POST /api/ai/chat` contra un mock Pact (sin API real). Genera el pact. |
-| **Pact provider** | Verifica ese pact contra el backend real. **Lab intencional:** el consumer exige `magicField` en products y el API **no** lo envía → falla con `Actual map is missing the following keys: magicField`. Sirve para enseñar un rompimiento de contrato. |
+| **Pact consumer** | El front (`web-frontend`) define el contrato real de `GET /api/products`, `GET /api/cart`, `POST /api/ai/chat` (sin `magicField`). Genera el pact crítico. |
+| **Pact provider** | Verifica el pact crítico contra el backend → **debe pasar (verde)** en CI. |
+| **Pact demo FAIL** | Consumer `web-frontend-demo-break` exige `magicField`; el provider demo **falla a propósito** para enseñar un rompimiento. Aislado del gate crítico (`continue-on-error`). |
 | **Newman OK** | Colección Postman: health, products, product by id, cart, add to cart, AI chat — asserts HTTP/JSON; debe pasar. |
 | **Newman FAIL demo** | Misma idea de API, pero un assert incorrecto (`count === 999`) para ver un fallo claro en el reporte HTML. |
-| **k6** | Carga ~40 s: rampa de VUs contra `/health`, `/api/products` y `/api/ai/chat` (mock); umbrales p95. |
+| **k6** | **Capacity** (~40 s): rampa de VUs contra `/health`, `/api/products` y `/api/ai/chat` (mock); umbrales **p95/p99**, **error rate** y **timeouts** explícitos. No mide calidad del modelo (eso es Maestro AI / `test:ai`). |
 
 **Qué automatiza Playwright (`npm run test:web`)** — canal **web**, Chromium:
 
 | Spec | Flujo automatizado |
 |------|--------------------|
-| `purchase-flow.spec.ts` | Resetea el carrito → abre `/` → ve header, badge y grid → añade **SmartBook Pro Laptop** al carrito → abre el carrito y comprueba ítems + total. |
-| `ai-chat.spec.ts` | Abre el FAB del chat (IA **mock** `ai-mock.ts`) → pregunta el precio de la laptop → espera texto con SmartBook/1299 → segundo caso: pregunta por “garantía de por vida” y comprueba la respuesta mock de alucinación. |
+| `purchase-flow.spec.ts` | Resetea el carrito → abre `/` → locators por **role/name** → añade **SmartBook Pro Laptop** → assert de outcome (badge 3, línea laptop ×2, total `$2849.97`). |
+| `ai-chat.spec.ts` | Abre el FAB (`getByRole`) → dialog + placeholder + Enviar → pregunta precio laptop → texto SmartBook/1299; segundo caso: “garantía de por vida”. `getByTestId` solo en burbujas de chat. |
 
 Notas:
 - Los pasos 3–6 necesitan el backend del paso 2 (Pact consumer no).
@@ -384,6 +388,8 @@ En este lab el chat existe en **web** y en **app**, pero las pruebas de IA está
 | **Comando** | `npm run test:web` | `npm run test:mobile:ai` |
 
 **Idea clave:** el mock responde a *“¿el producto de chat funciona?”*; el juez responde a *“¿lo que dice la IA es aceptable para la tienda?”*. Juntos cubren producto + calidad, sin mezclar flaky de modelos en el E2E web.
+
+**k6 vs calidad del modelo:** `npm run test:load` mide **capacidad** (latencia p95/p99, errores, timeouts bajo concurrencia). No sustituye Maestro AI / `test:ai` / `test:ai:judge`, que evalúan **calidad** de la respuesta.
 
 En `ai-chat.yaml` (app) verás asserts del estilo:
 - catálogo: menciona SmartBook / 1299  

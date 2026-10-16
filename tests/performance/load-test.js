@@ -1,7 +1,30 @@
+/**
+ * SmartShopLab — k6 LOAD (system capacity)
+ *
+ * This script measures CAPACITY under concurrency: latency, errors, timeouts.
+ * It does NOT judge model quality (hallucinations, relevance).
+ *
+ * Capacity (this file / `npm run test:load`):
+ *   - p95 / p99 latency
+ *   - http_req_failed rate
+ *   - explicit request timeouts
+ *
+ * Model quality (separate layer):
+ *   - Web UI with mock: `npm run test:web` (ai-chat.spec.ts)
+ *   - Mobile + LLM judge: `npm run test:mobile:ai`
+ *   - Heuristic / judge evals: `npm run test:ai` / `npm run test:ai:judge`
+ *
+ * In CI, prefer AI_PROVIDER=mock so load measures the system, not OpenRouter flakiness.
+ */
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 
 const BASE_URL = __ENV.API_URL || 'http://localhost:3001';
+
+// Explicit timeouts: fail the request instead of hanging forever under load
+const HEALTH_TIMEOUT = '3s';
+const PRODUCTS_TIMEOUT = '5s';
+const AI_TIMEOUT = '10s';
 
 export const options = {
   stages: [
@@ -10,30 +33,55 @@ export const options = {
     { duration: '10s', target: 0 },
   ],
   thresholds: {
-    http_req_duration: ['p(95)<1000'],
-    'http_req_duration{endpoint:products}': ['p(95)<500'],
-    'http_req_duration{endpoint:ai}': ['p(95)<1000'],
+    // Latency — watch p95 and p99 (averages hide the slow tail)
+    http_req_duration: ['p(95)<1000', 'p(99)<2000'],
+    'http_req_duration{endpoint:products}': ['p(95)<500', 'p(99)<1000'],
+    // AI endpoints are slower; still bound p99 so queues don't hide forever
+    'http_req_duration{endpoint:ai}': ['p(95)<1000', 'p(99)<2500'],
+    // Error rate under concurrency (capacity SLO)
+    http_req_failed: ['rate<0.05'],
+    'http_req_failed{endpoint:products}': ['rate<0.02'],
+    'http_req_failed{endpoint:ai}': ['rate<0.05'],
   },
 };
 
 export default function () {
-  const health = http.get(`${BASE_URL}/health`);
+  const health = http.get(`${BASE_URL}/health`, { timeout: HEALTH_TIMEOUT });
   check(health, { 'health ok': (r) => r.status === 200 });
 
-  const products = http.get(`${BASE_URL}/api/products`, { tags: { endpoint: 'products' } });
+  const products = http.get(`${BASE_URL}/api/products`, {
+    tags: { endpoint: 'products' },
+    timeout: PRODUCTS_TIMEOUT,
+  });
   check(products, {
     'products status 200': (r) => r.status === 200,
-    'products has items': (r) => JSON.parse(r.body).count > 0,
+    'products has items': (r) => {
+      try {
+        return JSON.parse(r.body).count > 0;
+      } catch {
+        return false;
+      }
+    },
   });
 
   const ai = http.post(
     `${BASE_URL}/api/ai/chat`,
     JSON.stringify({ message: '¿Cuánto cuesta la laptop?' }),
-    { headers: { 'Content-Type': 'application/json' }, tags: { endpoint: 'ai' } }
+    {
+      headers: { 'Content-Type': 'application/json' },
+      tags: { endpoint: 'ai' },
+      timeout: AI_TIMEOUT,
+    }
   );
   check(ai, {
     'ai status 200': (r) => r.status === 200,
-    'ai has reply': (r) => JSON.parse(r.body).reply.length > 0,
+    'ai has reply': (r) => {
+      try {
+        return JSON.parse(r.body).reply.length > 0;
+      } catch {
+        return false;
+      }
+    },
   });
 
   sleep(1);
@@ -44,9 +92,10 @@ function metricLine(data, name) {
   if (!metric || !metric.values) return `${name}: n/a`;
   const v = metric.values;
   const p95 = v['p(95)'] ?? v.p95;
+  const p99 = v['p(99)'] ?? v.p99;
   const avg = v.avg;
   const max = v.max;
-  return `${name}: avg=${avg !== undefined ? avg.toFixed(2) : 'n/a'} p95=${p95 !== undefined ? p95.toFixed(2) : 'n/a'} max=${max !== undefined ? max.toFixed(2) : 'n/a'}`;
+  return `${name}: avg=${avg !== undefined ? avg.toFixed(2) : 'n/a'} p95=${p95 !== undefined ? p95.toFixed(2) : 'n/a'} p99=${p99 !== undefined ? p99.toFixed(2) : 'n/a'} max=${max !== undefined ? max.toFixed(2) : 'n/a'}`;
 }
 
 function htmlEscape(value) {
@@ -61,15 +110,23 @@ export function handleSummary(data) {
   const passes = checks.passes ?? 0;
   const fails = checks.fails ?? 0;
   const httpFails = data.metrics.http_req_failed ? data.metrics.http_req_failed.values.rate : 0;
-  const passed = fails === 0 && httpFails === 0;
+  // Prefer official summary: any failed threshold → FAIL
+  const thresholdsOk = Object.values(data.metrics || {}).every((m) => {
+    if (!m.thresholds) return true;
+    return Object.values(m.thresholds).every((t) => t.ok !== false);
+  });
+  const passed = fails === 0 && httpFails < 0.05 && thresholdsOk;
   const status = passed ? 'PASS' : 'FAIL';
   const statusColor = passed ? '#16a34a' : '#dc2626';
   const details = [
+    'Layer: CAPACITY (k6) — not model-quality eval',
     metricLine(data, 'http_req_duration'),
     metricLine(data, 'http_req_duration{endpoint:products}'),
     metricLine(data, 'http_req_duration{endpoint:ai}'),
     `checks: ${passes} ok / ${fails} fail`,
     `http_req_failed rate: ${httpFails}`,
+    `thresholds ok: ${thresholdsOk}`,
+    `timeouts: health=${HEALTH_TIMEOUT} products=${PRODUCTS_TIMEOUT} ai=${AI_TIMEOUT}`,
   ].join('\n');
 
   const html = `<!DOCTYPE html>
@@ -77,7 +134,7 @@ export function handleSummary(data) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SmartShopLab — K6 Load</title>
+  <title>SmartShopLab — K6 Load (capacity)</title>
   <style>
     body { font-family: Inter, system-ui, sans-serif; margin: 0; background: #F9FAFB; color: #0F172A; }
     header { background: #1E293B; color: white; padding: 24px 32px; }
@@ -91,14 +148,15 @@ export function handleSummary(data) {
     main { padding: 24px 32px; max-width: 900px; }
     .badge { display: inline-block; background: ${statusColor}; color: white; padding: 4px 12px; border-radius: 999px; font-weight: 700; }
     pre { background: white; padding: 16px; border-radius: 12px; box-shadow: 0 1px 3px rgb(15 23 42 / 8%); }
+    .note { margin-top: 16px; color: #475569; font-size: 0.95rem; }
   </style>
 </head>
 <body>
   <header>
     <div class="header-row">
       <div class="header-text">
-        <h1>SmartShopLab — K6 Load</h1>
-        <p><span class="badge">${status}</span> thresholds y checks de /health, /api/products y /api/ai/chat</p>
+        <h1>SmartShopLab — K6 Load (capacity)</h1>
+        <p><span class="badge">${status}</span> p95/p99, error rate y timeouts — /health, /api/products, /api/ai/chat</p>
         <p>Generado: ${htmlEscape(new Date().toISOString())}</p>
       </div>
       <div class="tool-logo" title="Grafana k6">
@@ -111,12 +169,13 @@ export function handleSummary(data) {
   </header>
   <main>
     <pre>${htmlEscape(details)}</pre>
+    <p class="note">Model quality is out of scope here — use Maestro AI judge / <code>test:ai</code> for that layer.</p>
   </main>
 </body>
 </html>`;
 
   const text = [
-    `K6 ${status}`,
+    `K6 ${status} (capacity layer)`,
     details,
     'Reporte HTML: tests/performance/reports/k6-report.html',
   ].join('\n');

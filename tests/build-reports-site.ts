@@ -1,6 +1,22 @@
 // Construye un sitio estático con todos los reportes HTML del QA Lab.
 // Fuentes: tests/.../reports y published-reports (Maestro u overlays).
 // Salida: reports-site/ (gitignore) lista para GitHub Pages.
+//
+// Guía — set completo del lab = 12 HTML (este archivo no los exige; solo documenta):
+//   1. playwright-report.html                         → Web E2E (Playwright)
+//   2. newman-report.html                             → API (Newman)
+//   3. newman-demo-fail-report.html                   → API (Newman)
+//   4. pact-consumer-report.html                      → Contratos (Pact)
+//   5. pact-provider-report.html                      → Contratos (Pact, verde)
+//   5b. pact-provider-demo-fail-report.html           → Contratos (Pact demo magicField)
+//   6. k6-report.html                                 → Carga (k6)
+//   7. ai-evals-report.html                           → AI Evals   (npm run test:ai)
+//   8. llm-judge-report.html                          → AI Evals   (npm run test:ai:judge)
+//   9. maestro-ai-report-android.html                 → AI Evals   (Maestro + juez)
+//  10. maestro-ai-report-ios.html                     → AI Evals
+//  11. maestro-report-android.html                    → Mobile (Maestro)
+//  12. maestro-report-ios.html                        → Mobile (Maestro)
+// CI suele generar 1–8; Maestro (9–12) suele ir en published-reports/ vía reports:collect.
 import {
   copyFileSync,
   existsSync,

@@ -5,7 +5,9 @@
   "scripts": {
     "test": "npm run pact:consumer && npm run pact:provider",
     "pact:consumer": "mkdir -p reports && vitest run consumer.test.ts --reporter=default --reporter=json --outputFile=reports/consumer.json; e=$?; tsx write-consumer-html.ts; exit $e",
-    "pact:provider": "tsx provider.verify.ts"
+    "pact:consumer:demo-fail": "mkdir -p reports && vitest run consumer.demo-fail.test.ts --reporter=default --reporter=json --outputFile=reports/consumer-demo-fail.json; e=$?; exit $e",
+    "pact:provider": "tsx provider.verify.ts",
+    "pact:provider:demo-fail": "tsx provider.verify.demo-fail.ts"
   },
   "devDependencies": {
     "@pact-foundation/pact": "^13.2.0",

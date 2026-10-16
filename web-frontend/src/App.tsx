@@ -15,7 +15,7 @@ export default function App() {
   const [addingId, setAddingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const cartCount = cart?.items.reduce((sum, i) => sum + i.quantity, 0) ?? 2;
+  const cartCount = cart?.items.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
 
   const loadData = useCallback(async (query?: string) => {
     try {

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 const { like, eachLike, regex } = MatchersV3;
 
+/** Contrato real (crítico): el provider debe verificarlo en verde. */
 const provider = new PactV3({
   consumer: 'web-frontend',
   provider: 'smartshoplab-backend',
@@ -28,9 +29,6 @@ describe('SmartShopLab API Contract — Consumer', () => {
             stock: like(15),
           }),
           count: like(4),
-          // LAB INTENCIONAL: el backend NO envía magicField → provider verify siempre falla.
-          // Sirve para demostrar un rompimiento de contrato. No afecta Playwright/Newman/K6/AI.
-          magicField: like('obligatorio'),
         },
       });
 
