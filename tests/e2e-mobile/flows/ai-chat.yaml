@@ -1,0 +1,84 @@
+# Expo Go — single flow:
+# 1) UI: open chat and ask a question
+# 2) APP gets a REAL LLM reply (OpenRouter), not mock
+# 3) Copy on-screen text; LLM judge + catalog checks validate the reply
+# APP_ID / EXPO_URL: injected by run-maestro.js
+appId: ${APP_ID}
+---
+- runFlow: ../shared/open-expo-project.yaml
+- runFlow: ../shared/dismiss-ios-alerts.yaml
+- extendedWaitUntil:
+    visible:
+      id: "chatbot-fab"
+    timeout: 90000
+- extendedWaitUntil:
+    visible: "Continue"
+    timeout: 20000
+    optional: true
+    label: "Wait for Expo Continue (if shown)"
+- runFlow:
+    when:
+      visible: "Continue"
+    commands:
+      - tapOn: "Continue"
+      - waitForAnimationToEnd
+- runFlow: ../shared/dismiss-ios-alerts.yaml
+- tapOn:
+    id: "chatbot-fab"
+- assertVisible:
+    id: "chatbot-modal"
+- assertVisible:
+    id: "chatbot-status"
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible:
+      id: "chat-input"
+    timeout: 15000
+- tapOn:
+    id: "chat-input"
+- runFlow: ../shared/dismiss-ios-alerts.yaml
+# ASCII only (Maestro Android does not support Unicode in inputText)
+- inputText: "Hi, what laptops do you have?"
+# iOS dictation often appears when the keyboard opens
+- runFlow: ../shared/dismiss-ios-alerts.yaml
+# Dismiss iOS keyboard (tap non-editable area) before Send
+- tapOn:
+    id: "chatbot-status"
+    label: "Dismiss keyboard (tap status)"
+- waitForAnimationToEnd
+- tapOn:
+    id: "chat-send"
+- runFlow: ../shared/dismiss-ios-alerts.yaml
+# Wait for REAL LLM reply (may be slow). Do not copy the initial greeting.
+- extendedWaitUntil:
+    visible:
+      id: "chat-message-assistant-latest"
+      text: ".*(SmartBook|1299|laptop|Laptop).*"
+    timeout: 120000
+    label: "Wait for LLM reply about laptops/catalog"
+- copyTextFrom:
+    id: "chat-message-assistant-latest"
+# Ground truth + LLM-as-judge via backend (POST /api/ai/judge).
+# API key lives only in .env.ai-evals (backend; Maestro never sees it).
+- runScript:
+    file: ../scripts/judge-last-reply.js
+    env:
+      USER_QUESTION: "Hi, what laptops do you have?"
+      JUDGE_RUBRIC: "Must align with the real catalog: SmartBook Pro Laptop ~1299.99. English, helpful. No invented discounts/warranties/shipping."
+      JUDGE_API_URL: "http://127.0.0.1:3001/api/ai/judge"
+# Explicit assertions: what was validated vs catalog
+- assertTrue:
+    condition: ${output.judge.mentionsCatalog}
+    label: "Catalog (ground truth): mentions SmartBook / 1299 / laptop"
+- assertTrue:
+    condition: ${output.judge.noForbiddenClaims}
+    label: "Catalog (ground truth): no invented policies"
+- assertTrue:
+    condition: ${output.judge.checksMatchesCatalog}
+    label: "LLM judge: matches_catalog=true"
+- assertTrue:
+    condition: ${output.judge.checksNoHallucination}
+    label: "LLM judge: no_hallucination=true"
+- assertTrue:
+    condition: ${output.judge.pass}
+    label: "LLM judge: pass=true (score>=0.7, catalog aligned)"

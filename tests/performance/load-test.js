@@ -1,0 +1,202 @@
+/**
+ * SmartShopLab — k6 LOAD (system capacity)
+ *
+ * This script measures CAPACITY under concurrency: latency, errors, timeouts.
+ * It does NOT judge model quality (hallucinations, relevance).
+ *
+ * Capacity (this file / `npm run test:load`):
+ *   - p95 / p99 latency
+ *   - http_req_failed rate
+ *   - explicit request timeouts
+ *
+ * Model quality (separate layer):
+ *   - Web UI with mock: `npm run test:web` (ai-chat.spec.ts)
+ *   - Mobile + LLM judge: `npm run test:mobile:ai`
+ *   - Heuristic / judge evals: `npm run test:ai` / `npm run test:ai:judge`
+ *
+ * In CI, prefer AI_PROVIDER=mock so load measures the system, not OpenRouter flakiness.
+ */
+import http from 'k6/http';
+import { check, sleep } from 'k6';
+
+const BASE_URL = __ENV.API_URL || 'http://localhost:3001';
+
+// Explicit timeouts: fail the request instead of hanging forever under load
+const HEALTH_TIMEOUT = '3s';
+const PRODUCTS_TIMEOUT = '5s';
+const AI_TIMEOUT = '10s';
+
+export const options = {
+  stages: [
+    { duration: '10s', target: 10 },
+    { duration: '20s', target: 20 },
+    { duration: '10s', target: 0 },
+  ],
+  thresholds: {
+    // Latency — watch p95 and p99 (averages hide the slow tail)
+    http_req_duration: ['p(95)<1000', 'p(99)<2000'],
+    'http_req_duration{endpoint:products}': ['p(95)<500', 'p(99)<1000'],
+    // AI endpoints are slower; still bound p99 so queues don't hide forever
+    'http_req_duration{endpoint:ai}': ['p(95)<1000', 'p(99)<2500'],
+    // Error rate under concurrency (capacity SLO)
+    http_req_failed: ['rate<0.05'],
+    'http_req_failed{endpoint:products}': ['rate<0.02'],
+    'http_req_failed{endpoint:ai}': ['rate<0.05'],
+  },
+};
+
+export default function () {
+  const health = http.get(`${BASE_URL}/health`, { timeout: HEALTH_TIMEOUT });
+  check(health, { 'health ok': (r) => r.status === 200 });
+
+  const products = http.get(`${BASE_URL}/api/products`, {
+    tags: { endpoint: 'products' },
+    timeout: PRODUCTS_TIMEOUT,
+  });
+  check(products, {
+    'products status 200': (r) => r.status === 200,
+    'products has items': (r) => {
+      try {
+        return JSON.parse(r.body).count > 0;
+      } catch {
+        return false;
+      }
+    },
+  });
+
+  const ai = http.post(
+    `${BASE_URL}/api/ai/chat`,
+    JSON.stringify({ message: 'How much does the laptop cost?' }),
+    {
+      headers: { 'Content-Type': 'application/json' },
+      tags: { endpoint: 'ai' },
+      timeout: AI_TIMEOUT,
+    }
+  );
+  check(ai, {
+    'ai status 200': (r) => r.status === 200,
+    'ai has reply': (r) => {
+      try {
+        return JSON.parse(r.body).reply.length > 0;
+      } catch {
+        return false;
+      }
+    },
+  });
+
+  sleep(1);
+}
+
+function metricLine(data, name) {
+  const metric = data.metrics[name];
+  if (!metric || !metric.values) return `${name}: n/a`;
+  const v = metric.values;
+  const p95 = v['p(95)'] ?? v.p95;
+  const p99 = v['p(99)'] ?? v.p99;
+  const avg = v.avg;
+  const max = v.max;
+  return `${name}: avg=${avg !== undefined ? avg.toFixed(2) : 'n/a'} p95=${p95 !== undefined ? p95.toFixed(2) : 'n/a'} p99=${p99 !== undefined ? p99.toFixed(2) : 'n/a'} max=${max !== undefined ? max.toFixed(2) : 'n/a'}`;
+}
+
+function htmlEscape(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+export function handleSummary(data) {
+  const checks = data.metrics.checks ? data.metrics.checks.values : {};
+  const passes = checks.passes ?? 0;
+  const fails = checks.fails ?? 0;
+  const httpFails = data.metrics.http_req_failed ? data.metrics.http_req_failed.values.rate : 0;
+  // Prefer official summary: any failed threshold → FAIL
+  const thresholdsOk = Object.values(data.metrics || {}).every((m) => {
+    if (!m.thresholds) return true;
+    return Object.values(m.thresholds).every((t) => t.ok !== false);
+  });
+  const passed = fails === 0 && httpFails < 0.05 && thresholdsOk;
+  const status = passed ? 'PASS' : 'FAIL';
+  const statusColor = passed ? '#16a34a' : '#dc2626';
+  const details = [
+    'Layer: CAPACITY (k6) — not model-quality eval',
+    metricLine(data, 'http_req_duration'),
+    metricLine(data, 'http_req_duration{endpoint:products}'),
+    metricLine(data, 'http_req_duration{endpoint:ai}'),
+    `checks: ${passes} ok / ${fails} fail`,
+    `http_req_failed rate: ${httpFails}`,
+    `thresholds ok: ${thresholdsOk}`,
+    `timeouts: health=${HEALTH_TIMEOUT} products=${PRODUCTS_TIMEOUT} ai=${AI_TIMEOUT}`,
+  ].join('\n');
+
+  // Branding neon SmartShopLab (alineado con tests/html-report.ts)
+  const brandLogo = '<div class="brand-mark" aria-hidden="true">SSL</div>';
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SmartShopLab — K6 Load (capacity)</title>
+  <style>
+    body { font-family: Inter, system-ui, sans-serif; margin: 0; background: #F8F7FC; color: #0a0912; }
+    header { background: #0a0912; color: white; padding: 22px 28px; box-shadow: 0 8px 24px rgb(10 9 18 / 45%); border-bottom: 3px solid #f714aa; }
+    header p { margin: 8px 0 0; color: rgb(255 255 255 / 92%); }
+    .header-row { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
+    .brand { display: flex; align-items: center; gap: 16px; min-width: 0; flex: 1; }
+    .brand-logo, .brand-mark {
+      width: 140px; height: 140px; border-radius: 22px; flex-shrink: 0; object-fit: cover;
+      box-shadow: 0 4px 14px rgb(10 9 18 / 35%); border: 2px solid rgb(255 255 255 / 55%);
+    }
+    .brand-mark { display: grid; place-items: center; background: #0a0912; font-weight: 800; font-size: 14px; }
+    .brand-tag { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #f9d20c; margin-bottom: 4px; }
+    .header-text { min-width: 0; flex: 1; }
+    .header-text h1 { margin: 0; font-size: 1.45rem; }
+    .tool-logo { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .tool-logo svg { width: 56px; height: 56px; display: block; filter: drop-shadow(0 2px 6px rgb(0 0 0 / 25%)); }
+    .tool-label { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: rgb(255 255 255 / 88%); }
+    main { padding: 24px 32px; max-width: 900px; color: #000; }
+    main p, main pre, main code, main .note { color: #000; }
+    .badge { display: inline-block; background: ${statusColor}; color: white; padding: 4px 12px; border-radius: 999px; font-weight: 700; }
+    pre { background: white; padding: 16px; border-radius: 12px; box-shadow: 0 1px 3px rgb(15 23 42 / 8%); border: 1px solid rgb(247 20 170 / 12%); color: #000; }
+    .note { margin-top: 16px; color: #000; font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-row">
+      <div class="brand">
+        ${brandLogo}
+        <div class="header-text">
+          <div class="brand-tag">SmartShopLab QA Lab</div>
+          <h1>SmartShopLab — K6 Load (capacity)</h1>
+          <p><span class="badge">${status}</span> p95/p99, error rate y timeouts — /health, /api/products, /api/ai/chat</p>
+          <p>Generated: ${htmlEscape(new Date().toISOString())}</p>
+        </div>
+      </div>
+      <div class="tool-logo" title="Grafana k6">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 974" width="56" height="56" role="img" aria-label="k6">
+          <path fill="#FF671D" d="M1023.44 942.291C1026.79 958.149 1014.69 973.071 998.482 973.071H25.5392C6.85664 973.071 -5.48783 953.649 2.44323 936.734L319.975 259.491C326.801 244.934 345.227 240.244 358.181 249.765L520.715 369.244C532.581 377.968 549.347 374.858 557.297 362.463L782.224 11.7515C794.538 -7.45013 823.939 -2.06866 828.654 20.2499L1023.44 942.291ZM646.996 812.854H649.196C675.024 812.854 699.929 802.92 718.518 784.969C728.099 776.313 735.69 765.739 740.8 753.891C745.908 742.04 748.533 729.268 748.32 716.425C748.746 704.008 746.405 691.662 741.437 680.239C736.47 668.885 729.021 658.737 719.583 650.578C703.759 634.684 682.402 625.531 659.98 624.891H658.277C655.369 624.891 652.389 625.246 649.621 626.099L704.754 544.144L660.832 513.493L640.043 544.144L586.896 625.318C577.742 638.8 570.151 650.649 565.396 658.879C560.5 667.608 556.243 676.689 552.767 686.057C548.792 695.99 546.734 706.634 546.734 717.347C546.594 730.048 549.147 742.677 554.257 754.386C559.295 766.094 566.816 776.525 576.182 785.181C594.559 803.063 619.251 813.066 644.866 813.066L646.924 812.924L646.996 812.854ZM413.481 724.655L474.36 810.726H539.426L467.832 710.819L531.408 622.551L489.191 593.318L470.529 617.938L413.339 698.543V536.41L356.361 489.936V810.654H413.339V724.513H413.409L413.481 724.655ZM647.066 759.211C635.927 759.211 625.284 754.813 617.406 746.935C609.53 739.059 605.132 728.416 605.132 717.277C605.132 706.136 609.53 695.493 617.406 687.617C625.284 679.741 635.927 675.341 647.066 675.341H647.421C652.956 675.341 658.42 676.478 663.458 678.606C668.566 680.806 673.106 683.927 676.939 687.972C680.984 691.662 684.177 696.13 686.305 701.168C688.505 706.206 689.568 711.599 689.568 717.062C689.427 728.273 684.885 738.917 676.939 746.795C668.991 754.671 658.277 759.069 647.066 759.141V759.211Z"/>
+        </svg>
+        <span class="tool-label">Grafana k6</span>
+      </div>
+    </div>
+  </header>
+  <main>
+    <pre>${htmlEscape(details)}</pre>
+    <p class="note">Model quality is out of scope here — use Maestro AI judge / <code>test:ai</code> for that layer.</p>
+  </main>
+</body>
+</html>`;
+
+  const text = [
+    `K6 ${status} (capacity layer)`,
+    details,
+    'HTML report: tests/performance/reports/k6-report.html',
+  ].join('\n');
+
+  return {
+    stdout: `${text}\n`,
+    'tests/performance/reports/k6-report.html': html,
+  };
+}

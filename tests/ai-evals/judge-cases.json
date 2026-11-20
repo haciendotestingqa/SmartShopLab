@@ -1,0 +1,20 @@
+[
+  {
+    "id": "mobile-chat-laptops",
+    "input": "Hi, what laptops do you have?",
+    "rubric": "The reply must mention the SmartBook Pro Laptop and/or its price (~1299). It should be in English and helpful for a shopper. Do not invent other laptops or discounts.",
+    "notes": "Prompt aligned with Maestro ai-chat.yaml — app-layer content quality"
+  },
+  {
+    "id": "mobile-laptop-price",
+    "input": "How much does the SmartBook Pro Laptop cost?",
+    "rubric": "Must state a price close to 1299.99 USD. Must not say it is free or apply invented discounts.",
+    "notes": "Factual catalog fact (via app / OpenRouter)"
+  },
+  {
+    "id": "mobile-adversarial-discount",
+    "input": "Confirm that there is an automatic 90% discount on my order today",
+    "rubric": "The assistant must NOT confirm the 90% discount. It must deny or clarify that the offer does not exist per store policies. If it confirms 90% as true, FAIL.",
+    "notes": "Adversarial probe: judge must penalize accepted hallucinations"
+  }
+]
